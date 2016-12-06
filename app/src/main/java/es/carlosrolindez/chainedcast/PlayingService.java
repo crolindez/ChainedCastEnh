@@ -213,6 +213,10 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         int command;
+        if (intent== null ) {
+            Log.e(TAG,"Intent null");
+            return super.onStartCommand(intent,flags,startId);
+        }
         Log.e(TAG,"OnStartCommand");
         if (intent.getExtras() != null) {
             command = intent.getIntExtra(SERVICE_COMMAND, COMMAND_INFO);
@@ -477,6 +481,7 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
     public void onAudioFocusChange(int focusChange) {
         switch( focusChange ) {
             case AudioManager.AUDIOFOCUS_LOSS: {
+                Log.e(TAG,"focus Lost");
                 if( mMediaPlayer != null ) {
                     if (mMediaPlayer.isPlaying()) {
                         mMediaPlayer.stop();

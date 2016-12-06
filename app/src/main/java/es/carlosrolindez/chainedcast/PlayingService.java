@@ -513,7 +513,9 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
         if (currentState>=arraySong.size()) {
             stopSong();
         } else {
-            currentTrack++;
+            int track = currentTrack + 1;
+            stopSong();
+            currentTrack = track;
             startSong();
         }
     }

@@ -68,8 +68,8 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
     PendingIntent pIntentServicePlay;
     PendingIntent pIntentServicePause;
     PendingIntent pIntentServiceStop;
-//    PendingIntent pIntentServiceNext;
-//    PendingIntent pIntentServicePrevious;;
+    PendingIntent pIntentServiceNext;
+    PendingIntent pIntentServicePrevious;;
 
     private BroadcastReceiver mNoisyReceiver = new BroadcastReceiver() {
         @Override
@@ -119,14 +119,17 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
                 return;
             }
             if (arraySong== null) {
+                Log.e(TAG,"arraySong null");
                 return;
             }
 
             if (arraySong.size()==0)  {
+                Log.e(TAG,"arraySong empty");
                 return;
             }
 
             if ((currentState==STATE_PREPARING) || (currentState==STATE_PLAYING)) {
+                Log.e(TAG,"preparing or playing");
                 return;
             }
 
@@ -310,6 +313,7 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Log.e(TAG,"Destroy");
         AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         mMediaPlayer.stop();
         mMediaPlayer.reset();
@@ -374,8 +378,8 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
         Intent intentActivity = new Intent(this, ChainedCastActivity.class);
         intentActivity.setAction(Intent.ACTION_MAIN);
 
-//        Intent intentServicePrevious = new Intent(this, PlayingService.class);
-//        intentServicePrevious.putExtra(PlayingService.SERVICE_COMMAND, PlayingService.COMMAND_PREVIOUS);
+        Intent intentServicePrevious = new Intent(this, PlayingService.class);
+        intentServicePrevious.putExtra(PlayingService.SERVICE_COMMAND, PlayingService.COMMAND_PREVIOUS);
 
         Intent intentServicePlay = new Intent(this, PlayingService.class);
         intentServicePlay.putExtra(PlayingService.SERVICE_COMMAND, PlayingService.COMMAND_PLAY);
@@ -386,15 +390,15 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
         Intent intentServiceStop = new Intent(this, PlayingService.class);
         intentServiceStop.putExtra(PlayingService.SERVICE_COMMAND, PlayingService.COMMAND_STOP);
 
-//        Intent intentServiceNext = new Intent(this, PlayingService.class);
-//        intentServiceNext.putExtra(PlayingService.SERVICE_COMMAND, PlayingService.COMMAND_NEXT);
+        Intent intentServiceNext = new Intent(this, PlayingService.class);
+        intentServiceNext.putExtra(PlayingService.SERVICE_COMMAND, PlayingService.COMMAND_NEXT);
 
-        pIntentActivity = PendingIntent.getActivity(this, 0, intentActivity, PendingIntent.FLAG_UPDATE_CURRENT);
+        pIntentActivity = PendingIntent.getActivity(this, 5, intentActivity, PendingIntent.FLAG_UPDATE_CURRENT);
         pIntentServicePlay = PendingIntent.getService(this, 1, intentServicePlay, PendingIntent.FLAG_UPDATE_CURRENT);
         pIntentServicePause = PendingIntent.getService(this, 2, intentServicePause, PendingIntent.FLAG_UPDATE_CURRENT);
         pIntentServiceStop = PendingIntent.getService(this, 3, intentServiceStop, PendingIntent.FLAG_UPDATE_CURRENT);
-//        pIntentServiceNext = PendingIntent.getService(this, 4, intentServiceNext, PendingIntent.FLAG_UPDATE_CURRENT);
-//        pIntentServicePrevious = PendingIntent.getService(this, 5, intentServicePrevious, PendingIntent.FLAG_UPDATE_CURRENT);
+        pIntentServiceNext = PendingIntent.getService(this, 4, intentServiceNext, PendingIntent.FLAG_UPDATE_CURRENT);
+        pIntentServicePrevious = PendingIntent.getService(this, 5, intentServicePrevious, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
 
@@ -412,9 +416,11 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
                 .setContentIntent(pIntentActivity)
                 .setDeleteIntent(pIntentServiceStop)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .addAction(new NotificationCompat.Action(R.mipmap.ic_play_pause, "Pause",pIntentServicePause))
-                .setStyle(new NotificationCompat.MediaStyle().setShowActionsInCompactView(0).setMediaSession(mMediaSessionCompat.getSessionToken()))
-                .setSmallIcon(R.mipmap.ic_playing);
+                .addAction(new NotificationCompat.Action(R.mipmap.ic_action_previous, "Previous",pIntentServicePrevious))
+                .addAction(new NotificationCompat.Action(R.mipmap.ic_action_play_pause, "Pause",pIntentServicePause))
+                .addAction(new NotificationCompat.Action(R.mipmap.ic_action_next, "Next",pIntentServiceNext))
+                .setStyle(new NotificationCompat.MediaStyle().setShowActionsInCompactView(0,1,2).setMediaSession(mMediaSessionCompat.getSessionToken()))
+                .setSmallIcon(R.mipmap.ic_chained);
         NotificationManagerCompat.from(this).notify(1, builder.build());
 
     }
@@ -433,9 +439,11 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
                 .setContentIntent(pIntentActivity)
                 .setDeleteIntent(pIntentServiceStop)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .addAction(new NotificationCompat.Action(R.mipmap.ic_play_pause, "Play",pIntentServicePlay))
-                .setStyle(new NotificationCompat.MediaStyle().setShowActionsInCompactView(0).setMediaSession(mMediaSessionCompat.getSessionToken()))
-                .setSmallIcon(R.mipmap.ic_playing);
+                .addAction(new NotificationCompat.Action(R.mipmap.ic_action_previous, "Previous",pIntentServicePrevious))
+                .addAction(new NotificationCompat.Action(R.mipmap.ic_action_play_pause, "Play",pIntentServicePlay))
+                .addAction(new NotificationCompat.Action(R.mipmap.ic_action_next, "Next",pIntentServiceNext))
+                .setStyle(new NotificationCompat.MediaStyle().setShowActionsInCompactView(0,1,2).setMediaSession(mMediaSessionCompat.getSessionToken()))
+                .setSmallIcon(R.mipmap.ic_chained);
         NotificationManagerCompat.from(this).notify(1, builder.build());
     }
 
@@ -603,6 +611,7 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
 
     @Override
     public void onPrepared(MediaPlayer mp) {
+        Log.e(TAG,"onPrepared");
         mp.start();
         currentState = STATE_PLAYING;
         arraySong.get(currentTrack-1).setDuration(mp.getDuration());

@@ -115,6 +115,7 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
             super.onPlay();
 
             if( !successfullyRetrievedAudioFocus() ) {
+                Log.e(TAG,"Audio Focus not Retrieved");
                 return;
             }
             if (arraySong== null) {
@@ -259,9 +260,11 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
             Log.e(TAG,"Intent null");
             return super.onStartCommand(intent,flags,startId);
         }
-        Log.e(TAG,"OnStartCommand");
-        if (intent.getExtras() == null)
-            return super.onStartCommand(intent,flags,startId);
+
+        if (intent.getExtras() == null) {
+            Log.e(TAG, "Extras null");
+            return super.onStartCommand(intent, flags, startId);
+        }
 
         command = intent.getIntExtra(SERVICE_COMMAND, COMMAND_INFO);
 
@@ -538,6 +541,7 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
                 break;
             }
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT: {
+                Log.e(TAG,"focus Lost transient");
                 if( mMediaPlayer != null ) {
                     if (mMediaPlayer.isPlaying()) {
                         mMediaPlayer.pause();
@@ -546,12 +550,14 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
                 break;
             }
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK: {
+                Log.e(TAG,"focus Lost transient can duck");
                 if( mMediaPlayer != null ) {
                     mMediaPlayer.setVolume(0.3f, 0.3f);
                 }
                 break;
             }
             case AudioManager.AUDIOFOCUS_GAIN: {
+                Log.e(TAG,"focus gain");
                 if( mMediaPlayer != null ) {
                     mMediaPlayer.setVolume(1.0f, 1.0f);
                 }
@@ -566,7 +572,7 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
             stopSong();
             return;
         }
-        if (currentState>=arraySong.size()) {
+        if (currentTrack>=arraySong.size()) {
             stopSong();
         } else {
             int track = currentTrack + 1;

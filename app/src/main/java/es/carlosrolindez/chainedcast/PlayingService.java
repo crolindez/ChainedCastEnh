@@ -27,6 +27,7 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.KeyEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,10 +81,37 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
     };
 
     private MediaSessionCompat.Callback mMediaSessionCallback = new MediaSessionCompat.Callback() {
+        @Override
+        public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
+            if (mediaButtonEvent != null) {
+                KeyEvent event = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+                Log.e(TAG, event.toString());
+                if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
+                        && event.getRepeatCount() == 0) {
+                    switch (event.getKeyCode()) {
+                        case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+                            onPlayPause();
+                            return true;
 
+                        case KeyEvent.KEYCODE_MEDIA_PLAY:
+                            onPlay();
+                            return true;
+
+                        case KeyEvent.KEYCODE_MEDIA_NEXT:
+                            onSkipToNext();
+                            return true;
+                        case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+                            onSkipToPrevious();
+                            return true;
+                    }
+                }
+            }
+            return super.onMediaButtonEvent(mediaButtonEvent);
+        }
 
         @Override
         public void onPlay() {
+            Log.e(TAG,"Play");
             super.onPlay();
 
             if( !successfullyRetrievedAudioFocus() ) {
@@ -111,8 +139,21 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
             }
         }
 
+        public void onPlayPause() {
+            Log.e(TAG,"PlayPause");
+
+            if ((currentState==STATE_PREPARING) || (currentState==STATE_PLAYING)) {
+                onPause();
+            }
+            else { // Play
+                onPlay();
+            }
+        }
+
+
         @Override
         public void onPause() {
+            Log.e(TAG,"Pause");
             super.onPause();
 
             if( currentState == STATE_PLAYING) {
@@ -123,6 +164,7 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
         @Override
         public void onSkipToNext() {
             super.onSkipToNext();
+            if (arraySong== null) return;
             if (currentTrack>=arraySong.size()) {
                 if (currentState==STATE_STOPPED) return;
                 stopSong();
@@ -151,6 +193,7 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
         @Override
         public void onSkipToQueueItem(long id) {
             super.onSkipToQueueItem(id);
+            if (arraySong== null) return;
             if (id>arraySong.size()) {
                 if (currentState==STATE_STOPPED) return;
                 stopSong();
@@ -177,7 +220,6 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
             stopSong();
         }
 
-        // TODO Broadcast
 
         @Override
         public void onCommand(String command, Bundle extras, ResultReceiver cb) {
@@ -218,43 +260,45 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
             return super.onStartCommand(intent,flags,startId);
         }
         Log.e(TAG,"OnStartCommand");
-        if (intent.getExtras() != null) {
-            command = intent.getIntExtra(SERVICE_COMMAND, COMMAND_INFO);
+        if (intent.getExtras() == null)
+            return super.onStartCommand(intent,flags,startId);
 
-            switch (command) {
-                case COMMAND_INFO:
-                    Log.e(TAG,"COMMAND_INFO");
-                    arraySong = intent.getExtras().getParcelableArrayList(SERVICE_SONG_ARRAY);
-                    if (arraySong==null) {
-                        if (currentState!=STATE_STOPPED) stopSong();
-                    }
-                    break;
-                case COMMAND_PREVIOUS:
-                    Log.e(TAG,"COMMAND_PREVIOUS");
-                    mMediaSessionCompat.getController().getTransportControls().skipToPrevious();
-                    break;
-                case COMMAND_PLAY:
-                    Log.e(TAG,"COMMAND_PLAY");
-                    mMediaSessionCompat.getController().getTransportControls().play();
-                    break;
-                case COMMAND_PAUSE:
-                    Log.e(TAG,"COMMAND_PAUSE");
-                    mMediaSessionCompat.getController().getTransportControls().pause();
-                    break;
-                case COMMAND_NEXT:
-                    Log.e(TAG,"COMMAND_NEXT");
-                    mMediaSessionCompat.getController().getTransportControls().skipToNext();
-                    break;
-                case COMMAND_STOP:
-                    Log.e(TAG,"COMMAND_STOP");
-                    mMediaSessionCompat.getController().getTransportControls().stop();
-                    break;
-                default:
-                    Log.e(TAG,"Default");
-                    break;
+        command = intent.getIntExtra(SERVICE_COMMAND, COMMAND_INFO);
 
-            }
+        switch (command) {
+            case COMMAND_INFO:
+                Log.e(TAG,"COMMAND_INFO");
+                arraySong = intent.getExtras().getParcelableArrayList(SERVICE_SONG_ARRAY);
+                if (arraySong==null) {
+                    if (currentState!=STATE_STOPPED) stopSong();
+                }
+                break;
+            case COMMAND_PREVIOUS:
+                Log.e(TAG,"COMMAND_PREVIOUS");
+                mMediaSessionCompat.getController().getTransportControls().skipToPrevious();
+                break;
+            case COMMAND_PLAY:
+                Log.e(TAG,"COMMAND_PLAY");
+                mMediaSessionCompat.getController().getTransportControls().play();
+                break;
+            case COMMAND_PAUSE:
+                Log.e(TAG,"COMMAND_PAUSE");
+                mMediaSessionCompat.getController().getTransportControls().pause();
+                break;
+            case COMMAND_NEXT:
+                Log.e(TAG,"COMMAND_NEXT");
+                mMediaSessionCompat.getController().getTransportControls().skipToNext();
+                break;
+            case COMMAND_STOP:
+                Log.e(TAG,"COMMAND_STOP");
+                mMediaSessionCompat.getController().getTransportControls().stop();
+                break;
+            default:
+                Log.e(TAG,"Default");
+                break;
+
         }
+
         MediaButtonReceiver.handleIntent(mMediaSessionCompat, intent);
         return super.onStartCommand(intent,flags,startId);
     }
@@ -276,6 +320,8 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
 
     public void sendSongPosition() {
         if (mMediaPlayer == null) return;
+
+        if (arraySong==null) return;
 
         if (currentTrack>0) {
             CastItem song = arraySong.get(currentTrack-1);
@@ -441,6 +487,7 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
         //lock screen icon for pre lollipop
         metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ART, BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
         metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, title);
+        metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_TITLE, title);
         metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE, subtitle);
         metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "CR");
         metadataBuilder.putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, trackNumber);
@@ -515,6 +562,10 @@ public class PlayingService extends MediaBrowserServiceCompat implements MediaPl
 
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
+        if (arraySong== null) {
+            stopSong();
+            return;
+        }
         if (currentState>=arraySong.size()) {
             stopSong();
         } else {

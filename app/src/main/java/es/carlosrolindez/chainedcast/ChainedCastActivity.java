@@ -37,6 +37,8 @@ import java.util.ArrayList;
 
 import static android.content.ClipDescription.MIMETYPE_TEXT_PLAIN;
 
+
+
 public class ChainedCastActivity extends AppCompatActivity {
 
     private static final String TAG = "ChainedCastActivity";

@@ -164,6 +164,7 @@ public class ChainedCastActivity extends AppCompatActivity {
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                sendArrayToService(audioList);
                 getSupportMediaController().getTransportControls().skipToQueueItem(position+1);
             }
         });
@@ -174,6 +175,7 @@ public class ChainedCastActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 SeekBar sb = (SeekBar) v;
+                sendArrayToService(audioList);
                 getSupportMediaController().getTransportControls().seekTo(mCurrentDuration*sb.getProgress()/100);
                 return false;
             }
@@ -183,7 +185,7 @@ public class ChainedCastActivity extends AppCompatActivity {
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                sendArrayToService(audioList);
                 if (mCurrentState == STATE_PLAYING) {
                     getSupportMediaController().getTransportControls().pause();
                 } else {
@@ -197,6 +199,7 @@ public class ChainedCastActivity extends AppCompatActivity {
         previousButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                sendArrayToService(audioList);
                 getSupportMediaController().getTransportControls().skipToPrevious();
             }
         });
@@ -205,6 +208,7 @@ public class ChainedCastActivity extends AppCompatActivity {
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                sendArrayToService(audioList);
                 getSupportMediaController().getTransportControls().skipToNext();
             }
         });
@@ -236,6 +240,7 @@ public class ChainedCastActivity extends AppCompatActivity {
             else {
                 return;
             }
+            sendArrayToService(audioList);
             audioAdapter.notifyDataSetChanged();
 
         }

@@ -94,7 +94,6 @@ public class CastItem implements Parcelable{
 		int min = sec / 60;
 		sec -= (min * 60);
 		String secS;
-		String minS;
 		if (sec<10)
 			secS = "0" + sec;
 		else
